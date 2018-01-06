@@ -1,10 +1,10 @@
+<?php
 class memobird
 {
 	private $ak = ''; //access key
 	private $server = 'http://open.memobird.cn/home/';
 	private $url = array(
 		'getUserId' => 'setuserbind',
-		'getUser' =>  'getuser',
 		'printPaper' => 'printpaper',
 		'printUrl' => 'printpaperFromUrl',
 		'printHtml' => 'printpaperFromHtml',
@@ -23,19 +23,11 @@ class memobird
 		$paramsString = http_build_query($params);
 		return $this->curl($this->url['getUserId'],$paramsString);
 	}
-	
-
-	public function getUser($userid){
-		$params=array(
-			'ak'=> $this->ak,
-			'timestamp'=>date('Y-m-d h:m:s',time()),
-			'userid'=>$userid
-		);
-		$paramsString = http_build_query($params);
-		return $this->curl($this->url['getUser'],$paramsString);
-	}
 
 	public function printPaper($memobirdID,$userID){
+		if(!$this->contents){
+			return false;
+		}
 		$params=array(
 			'ak'=> $this->ak,
 			'timestamp'=>date('Y-m-d h:m:s',time()),
@@ -45,6 +37,30 @@ class memobird
 		);
 		$paramsString = http_build_query($params);
 		return $this->curl($this->url['printPaper'],$paramsString);
+	}
+	
+	public function printUrl($url, $memobirdID,$userID){
+		$params=array(
+			'ak'=> $this->ak,
+			'timestamp'=>date('Y-m-d h:m:s',time()),
+			'printUrl'=>$url,
+			'memobirdID'=>$memobirdID,
+			'userID'=>$userID
+		);
+		$paramsString = http_build_query($params);
+		return $this->curl($this->url['printUrl'],$paramsString);
+	}
+	
+	public function printHtml($html, $memobirdID,$userID){
+		$params=array(
+			'ak'=> $this->ak,
+			'timestamp'=>date('Y-m-d h:m:s',time()),
+			'printHtml'=>base64_encode($this->charsetToGBK($html)),
+			'memobirdID'=>$memobirdID,
+			'userID'=>$userID
+		);
+		$paramsString = http_build_query($params);
+		return $this->curl($this->url['printHtml'],$paramsString);
 	}
 	
 	public function getPaperStatus($printcontentID){
@@ -77,18 +93,18 @@ class memobird
 	}
 	
 	public function addImagesByUrl($url){
-		$c = $this->c_file($url);
+		$c = file_get_contents($url);
 		$r = $this->getPic(base64_encode($c));
 		if($r['showapi_res_code'] == 1){
 			return $this->addImagesContent($r['result']);
 		}
-		return false;
+		return $r;
 	}
 	
 	public function addImagesContent($content){
-		$c = 'P:'.base64_encode($content);
+		$c = 'P:' . base64_encode($content);
 		if($this->contents){
-			$c = '|'.$c;
+			$c = '|' . $c;
 		}
 		$this->contents .= $c;
 		return $this->contents;
@@ -96,7 +112,7 @@ class memobird
 	
 	public function addContent($content){
 		if($this->contents){
-			$content = '|'.$content;
+			$content = '|' . $content;
 		}
 		$this->contents .= $content;
 		return $this->contents;
@@ -106,27 +122,13 @@ class memobird
 	public function contentSet($type,$content){
 		switch($type){
 			case 'T':
-				$ret = $type.':'.base64_encode($this->charsetToGBK($content)."\n");break;
+				$ret = $type.':' . base64_encode($this->charsetToGBK($content) . "\n");break;
 			case 'P':
-				$ret = 'P:'.base64_encode($content);
+				$ret = 'P:' . base64_encode($content);
 			default:
 		}
 		return $ret;
 	}
-	
-	public  function c_file($file){
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $file);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-　　	curl_setopt($ch, CURLOPT_HEADER, 0);
-        $ret = curl_exec($ch);
-        if (false === $ret) {
-            $ret =  curl_errno($ch);
-        }
-        curl_close($ch);
-        return $ret;
-    }
-
 
     /**
      * 创建http header参数
@@ -153,12 +155,12 @@ class memobird
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         curl_setopt($ch, CURLOPT_DNS_USE_GLOBAL_CACHE, false);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $ret = curl_exec($ch);
-        if (false === $ret) {
-            $ret =  curl_errno($ch);
+        $data = curl_exec($ch);
+        if (false === $data) {
+            $data =  curl_errno($ch);
         }
         curl_close($ch);
-        return json_decode($ret,true);
+        return json_decode($data,true);
     }
 	
 	public function charsetToGBK($mixed){
@@ -175,13 +177,10 @@ class memobird
 			}
 		} else {
 			$encode = mb_detect_encoding($mixed, array('ASCII', 'UTF-8', 'GB2312', 'GBK', 'BIG5'));
-			//var_dump($encode);
 			if ($encode == 'UTF-8') {
 				$mixed = iconv('UTF-8', 'GBK', $mixed);
 			}
 		}
 		return $mixed;
 	}
-
-
 }

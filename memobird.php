@@ -1,7 +1,7 @@
 <?php
 class memobird
 {
-	private $ak = ''; //access key
+	private $ak = 'ACCESSKEY'; //access key
 	private $server = 'http://open.memobird.cn/home/';
 	private $url = array(
 		'getUserId' => 'setuserbind',

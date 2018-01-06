@@ -1,9 +1,10 @@
 <?php
+define(ACCESSKEY, '');  //你的accessKey
+$memobirdID = '';       //设备编码
+$str = 'default';       //用户标识
 require_once('memobird.php');
 date_default_timezone_set('Etc/GMT-8');
 $memobird = new memobird();
-$memobirdID = '';//设备编码
-$str = 'default';//用户标识
 //绑定并获取用户ID
 $res = $memobird->getUserId($memobirdID, $str);
 $userid = $res['showapi_userid'];
@@ -22,6 +23,6 @@ var_dump($res);
 $url = 'http://memobird.iecheng.cn/tmp/memobird/example.html';
 $res = $memobird->printUrl($url, $memobirdID, $userid);
 var_dump($res);
-$html = '<html><head></head><style>h2{font-size:2em;}</style><body><h2>欢迎使用</h2><p>Hello,World!</p></body></html>';
+$html = '<html><head></head><style>h2{font-size:2em;}</style><body><h2>欢迎使用</h2><p>Hello,MEMOBIRD!</p></body></html>';
 $res = $memobird->printHtml($html, $memobirdID, $userid);
 var_dump($res);
